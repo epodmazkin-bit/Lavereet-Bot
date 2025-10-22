@@ -1,12 +1,18 @@
 import { Telegraf, Markup, Scenes, session } from "telegraf";
 import axios from "axios";
 
-const BOT_TOKEN = process.env8413997708AAG9DMF6DZJidNozMfH8oHZyilTShlS3EU;
-const GOOGLE_SCRIPT_URL = process.env.https//script.google.com/macros/s/AKfycbxiFlm2r7y3nOogjlQQ9kNn2BsoPj5KuW0E5bq7mdEiDzIGcTJdcEe5UNVHzgZ5Edvjjw/exec;
-const ADMIN_ID = process.env1702469455;
+// ✅ Берём токен и другие переменные из окружения
+const BOT_TOKEN = process.env.BOT_TOKEN;
+const GOOGLE_SCRIPT_URL = process.env.GOOGLE_SCRIPT_URL;
+const ADMIN_ID = process.env.ADMIN_ID;
 
-const bot = new Telegraf8413997708AAG9DMF6DZJidNozMfH8oHZyilTShlS3EU;
+if (!BOT_TOKEN) {
+  console.error("❌ BOT_TOKEN не найден. Добавь его в переменные окружения Vercel.");
+}
 
+const bot = new Telegraf(BOT_TOKEN);
+
+// ======== СЦЕНЫ =========
 const askName = new Scenes.BaseScene("askName");
 askName.enter((ctx) => ctx.reply("👋 Как вас зовут?"));
 askName.on("text", (ctx) => {
@@ -21,7 +27,9 @@ askService.enter((ctx) =>
     Markup.keyboard([
       ["Айдентика", "Веб-дизайн"],
       ["Оформление для соцсетей", "Телеграм-боты"],
-    ]).oneTime().resize()
+    ])
+      .oneTime()
+      .resize()
   )
 );
 askService.on("text", (ctx) => {
@@ -36,17 +44,20 @@ askContact.on("text", async (ctx) => {
   const contact = ctx.message.text;
 
   try {
-    await axios.post(GOOGLE_SCRIPT_URL, { name, service, contact });
+    if (GOOGLE_SCRIPT_URL) {
+      await axios.post(GOOGLE_SCRIPT_URL, { name, service, contact });
+    } else {
+      console.warn("GOOGLE_SCRIPT_URL not set — skipping POST to Google Script.");
+    }
+
     await ctx.reply(`✅ Спасибо, ${name}! Ваша заявка получена.`);
 
-    const message = `
-📬 *Новая заявка!*
-👤 Имя: ${name}
-🎨 Услуга: ${service}
-📱 Контакт: ${contact}
-`;
-    await bot.telegram.sendMessage(1702469455, message, { parse_mode: "Markdown" });
-
+    const message = `📬 *Новая заявка!*\n👤 Имя: ${name}\n🎨 Услуга: ${service}\n📱 Контакт: ${contact}`;
+    if (ADMIN_ID) {
+      await bot.telegram.sendMessage(ADMIN_ID, message, { parse_mode: "Markdown" });
+    } else {
+      console.warn("ADMIN_ID not set — skipping admin notification.");
+    }
   } catch (err) {
     console.error(err);
     await ctx.reply("⚠️ Ошибка при отправке данных.");
@@ -72,6 +83,7 @@ const stage = new Scenes.Stage([askName, askService, askContact]);
 bot.use(session());
 bot.use(stage.middleware());
 
+// ======== КОМАНДЫ =========
 bot.start((ctx) => showMenu(ctx));
 
 bot.action("services", async (ctx) => {
@@ -115,12 +127,17 @@ bot.action("menu", async (ctx) => {
   showMenu(ctx);
 });
 
+// ======== ЭКСПОРТ ДЛЯ VERCEL =========
 export default async function handler(req, res) {
-  try {
-    await bot.handleUpdate(req.body);
-    res.status(200).send("ok");
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("error");
+  if (req.method === "POST") {
+    try {
+      await bot.handleUpdate(req.body);
+      res.status(200).send("ok");
+    } catch (err) {
+      console.error(err);
+      res.status(500).send("error");
+    }
+  } else {
+    res.status(200).send("Bot endpoint working ✅");
   }
 }
