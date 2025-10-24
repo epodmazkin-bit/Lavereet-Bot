@@ -1,18 +1,17 @@
 import { Telegraf, Markup, Scenes, session } from "telegraf";
 import axios from "axios";
+import dotenv from "dotenv";
+dotenv.config();
 
-// ✅ Берём токен и другие переменные из окружения
-const BOT_TOKEN = process.env.BOT_TOKEN;
-const GOOGLE_SCRIPT_URL = process.env.GOOGLE_SCRIPT_URL;
-const ADMIN_ID = process.env.ADMIN_ID;
+const BOT_TOKEN = process.env8413997708AAG9DMF6DZJidNozMfH8oHZyilTShlS3EU;
+const GOOGLE_SCRIPT_URL = process.env.https//script.google.com/macros/s/AKfycbxiFlm2r7y3nOogjlQQ9kNn2BsoPj5KuW0E5bq7mdEiDzIGcTJdcEe5UNVHzgZ5Edvjjw/exec;
+const ADMIN_ID = process.env1702469455;
 
-if (!BOT_TOKEN) {
-  console.error("❌ BOT_TOKEN не найден. Добавь его в переменные окружения Vercel.");
-}
+if (!BOT_TOKEN) throw new Error("❌ BOT_TOKEN not provided in environment");
 
-const bot = new Telegraf(BOT_TOKEN);
+const bot = new Telegraf8413997708AAG9DMF6DZJidNozMfH8oHZyilTShlS3EU;
 
-// ======== СЦЕНЫ =========
+// --- Сцены ---
 const askName = new Scenes.BaseScene("askName");
 askName.enter((ctx) => ctx.reply("👋 Как вас зовут?"));
 askName.on("text", (ctx) => {
@@ -20,44 +19,37 @@ askName.on("text", (ctx) => {
   ctx.scene.enter("askService");
 });
 
+// 👉 теперь askService не используется для выбора услуги, только переход в новую сцену
 const askService = new Scenes.BaseScene("askService");
 askService.enter((ctx) =>
-  ctx.reply(
-    "🎨 Какая услуга вас интересует?",
-    Markup.keyboard([
-      ["Айдентика", "Веб-дизайн"],
-      ["Оформление для соцсетей", "Телеграм-боты"],
-    ])
-      .oneTime()
-      .resize()
-  )
+  ctx.reply("🎨 Выберите категорию услуги:", {
+    ...Markup.inlineKeyboard([
+      [Markup.button.callback("🎨 Графика", "graphics")],
+      [Markup.button.callback("💻 Веб-разработка", "webdev")],
+      [Markup.button.callback("⬅️ Назад в меню", "menu")],
+    ]),
+  })
 );
-askService.on("text", (ctx) => {
-  ctx.scene.state.service = ctx.message.text;
-  ctx.scene.enter("askContact");
-});
 
+// Сцена для контакта
 const askContact = new Scenes.BaseScene("askContact");
-askContact.enter((ctx) => ctx.reply("📞 Оставьте контакт (Telegram или e-mail):"));
+askContact.enter((ctx) => ctx.reply("📞 Оставьте контакт (Telegram или номер телефона):"));
 askContact.on("text", async (ctx) => {
   const { name, service } = ctx.scene.state;
   const contact = ctx.message.text;
 
   try {
-    if (GOOGLE_SCRIPT_URL) {
-      await axios.post(GOOGLE_SCRIPT_URL, { name, service, contact });
-    } else {
-      console.warn("GOOGLE_SCRIPT_URL not set — skipping POST to Google Script.");
-    }
-
+    await axios.post(GOOGLE_SCRIPT_URL, { name, service, contact });
     await ctx.reply(`✅ Спасибо, ${name}! Ваша заявка получена.`);
 
-    const message = `📬 *Новая заявка!*\n👤 Имя: ${name}\n🎨 Услуга: ${service}\n📱 Контакт: ${contact}`;
-    if (ADMIN_ID) {
-      await bot.telegram.sendMessage(ADMIN_ID, message, { parse_mode: "Markdown" });
-    } else {
-      console.warn("ADMIN_ID not set — skipping admin notification.");
-    }
+    const message = `
+📬 *Новая заявка!*
+👤 Имя: ${name}
+🎨 Услуга: ${service}
+📱 Контакт: ${contact}
+`;
+    await bot.telegram.sendMessage(ADMIN_ID, message, { parse_mode: "Markdown" });
+
   } catch (err) {
     console.error(err);
     await ctx.reply("⚠️ Ошибка при отправке данных.");
@@ -67,38 +59,101 @@ askContact.on("text", async (ctx) => {
   showMenu(ctx);
 });
 
+// --- Главное меню ---
 function showMenu(ctx) {
-  return ctx.reply("✨ Добро пожаловать в студию дизайна Lavereet!", {
-    parse_mode: "Markdown",
-    ...Markup.inlineKeyboard([
-      [Markup.button.callback("🎨 Услуги", "services")],
-      [Markup.button.callback("📁 Портфолио", "portfolio")],
-      [Markup.button.callback("📝 Оставить заявку", "order")],
-      [Markup.button.callback("ℹ️ Контакты", "contacts")],
-    ]),
-  });
+  return ctx.editMessageText
+    ? ctx.editMessageText("✨ Добро пожаловать в студию дизайна *Lavereet*! Мы создаём стильный и осмысленный дизайн — без шаблонов и суеты, только честный визуал.", {
+        parse_mode: "Markdown",
+        ...Markup.inlineKeyboard([
+          [Markup.button.callback("🎨 Услуги", "services")],
+          [Markup.button.callback("📁 Портфолио", "portfolio")],
+          [Markup.button.callback("📝 Оставить заявку", "order")],
+          [Markup.button.callback("ℹ️ Контакты", "contacts")],
+        ]),
+      })
+    : ctx.reply("✨ Добро пожаловать в студию дизайна *Lavereet*! Мы создаём стильный и осмысленный дизайн — без шаблонов и суеты, только честный визуал.", {
+        parse_mode: "Markdown",
+        ...Markup.inlineKeyboard([
+          [Markup.button.callback("🎨 Услуги", "services")],
+          [Markup.button.callback("📁 Портфолио", "portfolio")],
+          [Markup.button.callback("📝 Оставить заявку", "order")],
+          [Markup.button.callback("ℹ️ Контакты", "contacts")],
+        ]),
+      });
 }
 
+// --- Настройка сцен ---
 const stage = new Scenes.Stage([askName, askService, askContact]);
 bot.use(session());
 bot.use(stage.middleware());
 
-// ======== КОМАНДЫ =========
+// --- Команды и действия ---
 bot.start((ctx) => showMenu(ctx));
 
+/* ==============================
+   1. Раздел Услуги
+   ============================== */
 bot.action("services", async (ctx) => {
   await ctx.answerCbQuery();
-  await ctx.editMessageText(
-    "🎨 Мы создаём:\n• Айдентику\n• Веб-дизайн\n• Оформление соцсетей\n• Телеграм-ботов",
-    {
-      ...Markup.inlineKeyboard([
-        [Markup.button.callback("📝 Оставить заявку", "order")],
-        [Markup.button.callback("⬅️ Назад в меню", "menu")],
-      ]),
-    }
-  );
+  await ctx.editMessageText("🎨 Выберите категорию услуги:", {
+    ...Markup.inlineKeyboard([
+      [Markup.button.callback("🎨 Графика", "graphics")],
+      [Markup.button.callback("💻 Веб-разработка", "webdev")],
+      [Markup.button.callback("⬅️ Назад в меню", "menu")],
+    ]),
+  });
 });
 
+/* ==============================
+   2. Подраздел — Графика
+   ============================== */
+bot.action("graphics", async (ctx) => {
+  await ctx.answerCbQuery();
+  await ctx.editMessageText("🖌 Выберите услугу из категории *Графика*:", {
+    parse_mode: "Markdown",
+    ...Markup.inlineKeyboard([
+      [Markup.button.callback("Логотип", "service_Логотип")],
+      [Markup.button.callback("Фирменный стиль", "service_Фирменный стиль")],
+      [Markup.button.callback("Оформление соц сетей", "service_Оформление соц сетей")],
+      [Markup.button.callback("Инфографика", "service_Инфографика")],
+      [Markup.button.callback("⬅️ Назад", "services")],
+    ]),
+  });
+});
+
+/* ==============================
+   3. Подраздел — Веб-разработка
+   ============================== */
+bot.action("webdev", async (ctx) => {
+  await ctx.answerCbQuery();
+  await ctx.editMessageText("💻 Выберите услугу из категории *Веб-разработка*:", {
+    parse_mode: "Markdown",
+    ...Markup.inlineKeyboard([
+      [Markup.button.callback("Лендинги", "service_Лендинги")],
+      [Markup.button.callback("Сайты", "service_Сайты")],
+      [Markup.button.callback("Телеграм-боты", "service_Телеграм-боты")],
+      [Markup.button.callback("⬅️ Назад", "services")],
+    ]),
+  });
+});
+
+/* ==============================
+   4. Выбор конкретной услуги
+   ============================== */
+bot.action(/^service_(.+)/, async (ctx) => {
+  const serviceName = ctx.match[1];
+  ctx.scene.state.service = serviceName;
+  await ctx.answerCbQuery();
+  await ctx.editMessageText(`📝 Вы выбрали услугу: *${serviceName}*`, {
+    parse_mode: "Markdown",
+  });
+  await ctx.reply("📞 Теперь оставьте контакт (Telegram или номер телефона):");
+  await ctx.scene.enter("askContact");
+});
+
+/* ==============================
+   Остальные действия
+   ============================== */
 bot.action("portfolio", async (ctx) => {
   await ctx.answerCbQuery();
   await ctx.editMessageText("📁 Наши работы скоро появятся здесь.", {
@@ -124,20 +179,16 @@ bot.action("order", async (ctx) => {
 
 bot.action("menu", async (ctx) => {
   await ctx.answerCbQuery();
-  showMenu(ctx);
+  await showMenu(ctx);
 });
 
-// ======== ЭКСПОРТ ДЛЯ VERCEL =========
+// --- Для серверных сред (Vercel и т.п.) ---
 export default async function handler(req, res) {
-  if (req.method === "POST") {
-    try {
-      await bot.handleUpdate(req.body);
-      res.status(200).send("ok");
-    } catch (err) {
-      console.error(err);
-      res.status(500).send("error");
-    }
-  } else {
-    res.status(200).send("Bot endpoint working ✅");
+  try {
+    await bot.handleUpdate(req.body);
+    res.status(200).send("ok");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("error");
   }
 }
