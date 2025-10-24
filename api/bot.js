@@ -39,7 +39,7 @@ askContact.on("text", async (ctx) => {
   const contact = ctx.message.text;
 
   try {
-    await axios.post(GOOGLE_SCRIPT_URL, { name, service, contact });
+    await axios.post("https//script.google.com/macros/s/AKfycbxiFlm2r7y3nOogjlQQ9kNn2BsoPj5KuW0E5bq7mdEiDzIGcTJdcEe5UNVHzgZ5Edvjjw/exec", { name, service, contact });
     await ctx.reply(`✅ Спасибо, ${name}! Ваша заявка получена.`);
 
     const message = `
@@ -48,7 +48,7 @@ askContact.on("text", async (ctx) => {
 🎨 Услуга: ${service}
 📱 Контакт: ${contact}
 `;
-    await bot.telegram.sendMessage(ADMIN_ID, message, { parse_mode: "Markdown" });
+    await bot.telegram.sendMessage(1702469455, message, { parse_mode: "Markdown" });
 
   } catch (err) {
     console.error(err);
@@ -164,7 +164,7 @@ bot.action("portfolio", async (ctx) => {
 bot.action("contacts", async (ctx) => {
   await ctx.answerCbQuery();
   await ctx.editMessageText(
-    "📞 Контакты студии Lavereet:\nTelegram: @Lavereet\nEmail: lavereet.design@gmail.com",
+    "📞 Контакты студии Lavereet:\nTelegram: @lavereet_agency\nEmail: lavereet.agency@gmail.com",
     {
       ...Markup.inlineKeyboard([[Markup.button.callback("⬅️ Назад", "menu")]]),
     }
